@@ -192,9 +192,36 @@ def youku_download_playlist(url, config):
 		if not os.path.exists(title):
 			os.makedirs(title)
 		output_dir = title
-	for i, id in enumerate(ids):
-		print 'Downloading %s of %s videos...' % (i + 1, len(ids))
-		youku_download(id, config=config, output_dir=output_dir)
+
+	ids_len = len(ids)
+	if not config["interactive"]:
+		for i, id in enumerate(ids):
+			print 'Downloading %s of %s videos...' % (i + 1, len(ids))
+			youku_download(id, config=config, output_dir=output_dir)
+	else:
+		ids_info = []
+		print("Collecting video titles...")
+		def get_title(idx, avid):
+			id2, title = parse_page(avid)
+			if type(title) == unicode:
+				title = title.encode(default_encoding)
+				title = title.replace('?', '-')
+			print("[%d/%d] %s: %s" % (idx+1, ids_len, id2, title))
+			vid_info = {"id":id2, "title": title}
+			ids_info.append(vid_info)
+
+		for i, vid in enumerate(ids):
+			get_title(i, vid)
+
+		selected_ids = select_playlist_info(ids_info)
+		selected_len = len(selected_ids)
+		for i, vid_info in enumerate(selected_ids):
+			print 'Downloading %s of %s videos...' % (i + 1, selected_len)
+			youku_download_by_id(vid_info["id"], vid_info["title"],
+					output_dir, merge=config["merge"])
+
+
+
 
 download = youku_download
 download_playlist = youku_download_playlist

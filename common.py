@@ -111,6 +111,48 @@ def url_size(url):
 def urls_size(urls):
 	return sum(map(url_size, urls))
 
+def select_playlist_info(alist):
+	"""Interactive select items from a list of {} with key "title" in it."""
+	result = set({})
+	alen = len(alist)
+	while True:
+		print("\nAvailable vidoes:")
+		for i, vid_info in enumerate(alist):
+			tag = " "
+			if i in result:
+				tag = "*"
+			print "%s%d) %s" % (tag, i+1, vid_info["title"])
+		print("Total: %d" % alen)
+		print('Select number and press <Enter>. Seperate numbers by ",".')
+		print('a = all; n = none; q = finish')
+		resp = raw_input("video number: ").strip()
+
+		resp = [x.strip() for x in resp.split(",")]
+		try:
+			resp = [(int(x) - 1) for x in resp]
+			for i in resp:
+				if i >= alen:
+					continue
+				if i in result:
+					result.remove(i)
+				else:
+					result.add(i)
+		except ValueError:
+			if 'a' in resp or "all" in resp:
+				result = set(range(alen))
+				continue
+			if 'n' in resp or "none" in resp:
+				result = set({})
+				continue
+			elif 'q' in resp or "quit" in resp:
+				break
+
+	ret = []
+	for i in range(len(alist)):
+		if i in result:
+			ret.append(alist[i])
+	return ret
+
 class SimpleProgressBar:
 	def __init__(self, total_size, total_pieces=1):
 		self.displayed = False
@@ -245,9 +287,9 @@ def playlist_not_supported(name):
 
 def script_main(script_name, download, download_playlist=None):
 	if download_playlist:
-		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] url ...' % script_name
-		short_opts = 'hc'
-		opts = ['help', 'playlist', 'create-dir', 'no-merge']
+		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] [-i|--interactive] url ...' % script_name
+		short_opts = 'hci'
+		opts = ['help', 'playlist', 'create-dir', 'no-merge', 'interactive']
 	else:
 		help = 'python [--no-merge] %s.py url ...' % script_name
 		short_opts = 'h'
@@ -259,6 +301,9 @@ def script_main(script_name, download, download_playlist=None):
 		print help
 		sys.exit(1)
 	playlist = False
+
+	config = {}
+	config["interactive"] = False
 	create_dir = False
 	merge = True
 	for o, a in opts:
@@ -271,6 +316,8 @@ def script_main(script_name, download, download_playlist=None):
 			create_dir = True
 		elif o in ('--no-merge'):
 			merge = False
+		elif o in ('-i', '--interactive'):
+			config["interactive"] = True
 		else:
 			print help
 			sys.exit(1)
@@ -278,7 +325,6 @@ def script_main(script_name, download, download_playlist=None):
 		print help
 		sys.exit(1)
 
-	config = {}
 	config["create_dir"] = create_dir
 	config["merge"] = merge
 	for url in args:
