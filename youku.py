@@ -77,6 +77,9 @@ def parse_page(url):
 	page = get_html(url)
 	id2 = re.search(r"var\s+videoId2\s*=\s*'(\S+)'", page).group(1)
 	title = parse_video_title(url, page)
+	if type(title) == unicode:
+		title = title.encode(default_encoding)
+		title = title.replace('?', '-')
 	return id2, title
 
 def get_info(videoId2):
@@ -130,9 +133,6 @@ def youku_download_by_id(id2, title, output_dir='.', stream_type=None, merge=Tru
 def youku_download(url, config, output_dir='', stream_type=None):
 	merge = config["merge"]
 	id2, title = parse_page(url)
-	if type(title) == unicode:
-		title = title.encode(default_encoding)
-		title = title.replace('?', '-')
 	youku_download_by_id(id2, title, output_dir, merge=merge)
 
 def parse_playlist_videos(html):
@@ -210,9 +210,6 @@ def youku_download_playlist(url, config):
 		def get_title(idx, avid):
 			"""Download thread title and save it"""
 			id2, title = parse_page(avid)
-			if type(title) == unicode:
-				title = title.encode(default_encoding)
-				title = title.replace('?', '-')
 			vid_info = {"id":id2, "title": title}
 			ids_map_lock.acquire()
 			ids_map[avid] = vid_info
