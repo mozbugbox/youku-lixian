@@ -278,9 +278,12 @@ def script_main(script_name, download, download_playlist=None):
 		print help
 		sys.exit(1)
 
+	config = {}
+	config["create_dir"] = create_dir
+	config["merge"] = merge
 	for url in args:
 		if playlist:
-			download_playlist(url, create_dir=create_dir, merge=merge)
+			download_playlist(url, config=config)
 		else:
-			download(url, merge=merge)
+			download(url, config=config)
 

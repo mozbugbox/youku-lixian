@@ -32,7 +32,7 @@ def parse_srt_p(p):
 	# pool 0: normal
 	# pool 1: srt
 	# pool 2: special?
-	
+
 	font_size = int(font_size)
 
 	font_color = '#%06x' % int(font_color)
@@ -45,7 +45,8 @@ def parse_srt_xml(xml):
 		p = parse_srt_p(x)
 	raise NotImplementedError()
 
-def bilibili_download(url, merge=True):
+def bilibili_download(url, config):
+	merge = config["merge"]
 	assert re.match(r'http://(www.bilibili.tv|bilibili.kankanews.com)/video/av(\d+)', url)
 	html = get_html(url)
 

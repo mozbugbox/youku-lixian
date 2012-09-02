@@ -30,7 +30,8 @@ def yinyuetai_download_by_id(id, title=None, merge=True):
 	ext, size = url_info(url)
 	download_urls([url], title, ext, total_size=size, merge=merge)
 
-def yinyuetai_download(url, merge=True):
+def yinyuetai_download(url, config):
+	merge = config["merge"]
 	id = r1(r'http://www.yinyuetai.com/video/(\d+)$', url)
 	assert id
 	html = get_html(url, 'utf-8')

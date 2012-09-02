@@ -127,7 +127,8 @@ def youku_download_by_id(id2, title, output_dir='.', stream_type=None, merge=Tru
 	total_size = sum(sizes)
 	download_urls(urls, title, file_type_of_url(urls[0]), total_size, output_dir, merge=merge)
 
-def youku_download(url, output_dir='', stream_type=None, merge=True):
+def youku_download(url, config, output_dir='', stream_type=None):
+	merge = config["merge"]
 	id2, title = parse_page(url)
 	if type(title) == unicode:
 		title = title.encode(default_encoding)
@@ -167,7 +168,10 @@ def parse_vplaylist(url):
 	n = int(re.search(r'<span class="num">(\d+)</span>', get_html(url)).group(1))
 	return ['http://v.youku.com/v_playlist/f%so0p%s.html' % (id, i) for i in range(n)]
 
-def youku_download_playlist(url, create_dir=False, merge=True):
+def youku_download_playlist(url, config):
+	create_dir = config["create_dir"]
+	merge = config["merge"]
+
 	if re.match(r'http://www.youku.com/show_page/id_\w+.html', url):
 		url = find_video_id_from_show_page(url)
 	if re.match(r'http://www.youku.com/playlist_show/id_\d+(?:_ascending_\d_mode_pic(?:_page_\d+)?)?.html', url):
@@ -190,7 +194,7 @@ def youku_download_playlist(url, create_dir=False, merge=True):
 		output_dir = title
 	for i, id in enumerate(ids):
 		print 'Downloading %s of %s videos...' % (i + 1, len(ids))
-		youku_download(id, output_dir=output_dir, merge=merge)
+		youku_download(id, config=config, output_dir=output_dir)
 
 download = youku_download
 download_playlist = youku_download_playlist

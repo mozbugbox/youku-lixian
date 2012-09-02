@@ -19,7 +19,8 @@ def ku6_download_by_id(id, title=None, output_dir='.', merge=True):
 	ext = {'f4v':'flv'}.get(ext, ext)
 	download_urls(urls, title, ext, total_size=size, merge=merge)
 
-def ku6_download(url, merge=True):
+def ku6_download(url, config):
+	merge = config["merge"]
 	id = r1(r'http://v.ku6.com/special/show_\d+/(.*)\.\.\.html', url)
 	ku6_download_by_id(id, merge=merge)
 
