@@ -170,7 +170,7 @@ def parse_vplaylist(url):
 
 def youku_download_playlist(url, config):
 	create_dir = config["create_dir"]
-	merge = config["merge"]
+	print("Collecting video IDs for the playlist...")
 
 	if re.match(r'http://www.youku.com/show_page/id_\w+.html', url):
 		url = find_video_id_from_show_page(url)
@@ -200,18 +200,49 @@ def youku_download_playlist(url, config):
 			youku_download(id, config=config, output_dir=output_dir)
 	else:
 		ids_info = []
+		ids_map = {}
 		print("Collecting video titles...")
+
+		# download video title in threads
+		import threading
+		ids_map_lock = threading.Lock()
+
 		def get_title(idx, avid):
+			"""Download thread title and save it"""
 			id2, title = parse_page(avid)
 			if type(title) == unicode:
 				title = title.encode(default_encoding)
 				title = title.replace('?', '-')
-			print("[%d/%d] %s: %s" % (idx+1, ids_len, id2, title))
 			vid_info = {"id":id2, "title": title}
-			ids_info.append(vid_info)
+			ids_map_lock.acquire()
+			ids_map[avid] = vid_info
+			print("[%d/%d] %s: %s" % (idx+1, ids_len, id2, title))
+			ids_map_lock.release()
 
-		for i, vid in enumerate(ids):
-			get_title(i, vid)
+		args_list = list(enumerate(ids))
+		args_list.reverse()
+		thread_list = set()
+		conns = 5 # number of cocurrent threads
+		while len(thread_list) > 0 or len(args_list) > 0:
+			# start some threads
+			while len(thread_list) < conns and len(args_list) > 0:
+				args = args_list.pop()
+				t = threading.Thread(target=get_title, args=args)
+				thread_list.add(t)
+				t.start()
+
+			# remove finished threads
+			t_done = []
+			for t1 in thread_list:
+				t1.join(.1)
+				if not t1.isAlive():
+					t_done.append(t1)
+			for t1 in t_done:
+				thread_list.remove(t1)
+
+		# restore ids order
+		for i in ids:
+			ids_info.append(ids_map[i])
 
 		selected_ids = select_playlist_info(ids_info)
 		selected_len = len(selected_ids)
@@ -219,9 +250,6 @@ def youku_download_playlist(url, config):
 			print 'Downloading %s of %s videos...' % (i + 1, selected_len)
 			youku_download_by_id(vid_info["id"], vid_info["title"],
 					output_dir, merge=config["merge"])
-
-
-
 
 download = youku_download
 download_playlist = youku_download_playlist
