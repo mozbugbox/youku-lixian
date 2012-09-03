@@ -126,10 +126,20 @@ def select_playlist_info(alist):
 		print('Select number and press <Enter>. Seperate numbers by ",".')
 		print('a = all; n = none; q = finish')
 		resp = raw_input("video number: ").strip()
+		if len(resp) <= 0:
+			continue
+		elif resp in {"a", "all"}:
+			result = set(range(alen))
+			continue
+		elif resp in {"n", "none"}:
+			result = set()
+			continue
+		elif resp in {"q", "quit", "finish", "exit"}:
+			break
 
 		resp = [x.strip() for x in resp.split(",")]
 		try:
-			resp = [(int(x) - 1) for x in resp]
+			resp = {(int(x) - 1) for x in resp}
 			for i in resp:
 				if i >= alen:
 					continue
@@ -138,14 +148,7 @@ def select_playlist_info(alist):
 				else:
 					result.add(i)
 		except ValueError:
-			if 'a' in resp or "all" in resp:
-				result = set(range(alen))
-				continue
-			if 'n' in resp or "none" in resp:
-				result = set({})
-				continue
-			elif 'q' in resp or "quit" in resp:
-				break
+			pass
 
 	ret = []
 	for i in range(len(alist)):
