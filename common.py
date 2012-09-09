@@ -233,7 +233,7 @@ def download_urls(urls, title, ext, total_size, output_dir='.', refer=None, merg
 		job_list = []
 		print 'Downloading %s.%s ...' % (title, ext)
 		for i, url in enumerate(urls):
-			filename = '%s[%02d].%s' % (title, i, ext)
+			filename = '%s-%02d.%s' % (title, i+1, ext)
 			filepath = os.path.join(output_dir, filename)
 			flvs.append(filepath)
 			#print 'Downloading %s [%s/%s]...' % (filename, i+1, len(urls))
