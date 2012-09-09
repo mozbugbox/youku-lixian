@@ -3,6 +3,7 @@ import urllib2
 import os.path
 import sys
 import re
+import threading
 
 default_encoding = sys.getfilesystemencoding()
 if default_encoding.lower() == 'ascii':
@@ -71,6 +72,7 @@ def url_save(url, filepath, bar, refer=None):
 	headers = {}
 	if refer:
 		headers['Referer'] = refer
+	bar.raise_piece(1)
 	request = urllib2.Request(url, headers=headers)
 	response = urllib2.urlopen(request)
 	file_size = int(response.headers['content-length'])
@@ -96,6 +98,7 @@ def url_save(url, filepath, bar, refer=None):
 			if bar:
 				bar.update_received(len(buffer))
 	assert received == file_size == os.path.getsize(filepath), '%s == %s == %s' % (received, file_size, os.path.getsize(filepath))
+	print("\n{} finished!".format(os.path.basename(filepath)))
 
 def url_size(url):
 	request = urllib2.Request(url)
@@ -116,8 +119,9 @@ class SimpleProgressBar:
 		self.displayed = False
 		self.total_size = total_size
 		self.total_pieces = total_pieces
-		self.current_piece = 1
+		self.current_piece = 0
 		self.received = 0
+		self.update_lock = threading.Lock()
 	def update(self):
 		self.displayed = True
 		bar_size = 40
@@ -137,10 +141,14 @@ class SimpleProgressBar:
 		sys.stdout.write('\r'+bar)
 		sys.stdout.flush()
 	def update_received(self, n):
+		self.update_lock.acquire()
 		self.received += n
 		self.update()
-	def update_piece(self, n):
-		self.current_piece = n
+		self.update_lock.release()
+	def raise_piece(self, n):
+		self.update_lock.acquire()
+		self.current_piece += n
+		self.update_lock.release()
 	def done(self):
 		if self.displayed:
 			print
@@ -151,18 +159,23 @@ class PiecesProgressBar:
 		self.displayed = False
 		self.total_size = total_size
 		self.total_pieces = total_pieces
-		self.current_piece = 1
+		self.current_piece = 0
 		self.received = 0
+		self.update_lock = threading.Lock()
 	def update(self):
 		self.displayed = True
 		bar = '{0:>3}%[{1:<40}] {2}/{3}'.format('?', '?'*40, self.current_piece, self.total_pieces)
 		sys.stdout.write('\r'+bar)
 		sys.stdout.flush()
 	def update_received(self, n):
+		self.update_lock.acquire()
 		self.received += n
 		self.update()
-	def update_piece(self, n):
-		self.current_piece = n
+		self.update_lock.release()
+	def raise_piece(self, n):
+		self.update_lock.acquire()
+		self.current_piece += n
+		self.update_lock.release()
 	def done(self):
 		if self.displayed:
 			print
@@ -173,7 +186,7 @@ class DummyProgressBar:
 		pass
 	def update_received(self, n):
 		pass
-	def update_piece(self, n):
+	def raise_piece(self, n):
 		pass
 	def done(self):
 		pass
@@ -214,14 +227,20 @@ def download_urls(urls, title, ext, total_size, output_dir='.', refer=None, merg
 		bar.done()
 	else:
 		flvs = []
+		job_list = []
 		print 'Downloading %s.%s ...' % (title, ext)
 		for i, url in enumerate(urls):
 			filename = '%s[%02d].%s' % (title, i, ext)
 			filepath = os.path.join(output_dir, filename)
 			flvs.append(filepath)
 			#print 'Downloading %s [%s/%s]...' % (filename, i+1, len(urls))
-			bar.update_piece(i+1)
-			url_save(url, filepath, bar, refer=refer)
+			job = (url_save, (url, filepath, bar), {"refer":refer})
+			job_list.append(job)
+		job_list.reverse()
+
+		import thread_pool
+		tpool = thread_pool.ThreadPool(job_list)
+		tpool.start()
 		bar.done()
 		if not merge:
 			return
