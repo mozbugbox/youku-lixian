@@ -80,6 +80,7 @@ def url_save(url, filepath, bar, refer=None):
 	if os.path.exists(filepath):
 		if file_size == os.path.getsize(filepath):
 			if bar:
+				bar.update_received(file_size)
 				bar.done()
 			print 'Skip %s: file already exists' % os.path.basename(filepath)
 			return
