@@ -68,7 +68,7 @@ def get_decoded_html(url):
 	else:
 		return data
 
-def url_save(url, filepath, bar, refer=None):
+def _url_save(url, filepath, bar, refer=None):
 	headers = {}
 	if refer:
 		headers['Referer'] = refer
@@ -102,6 +102,24 @@ def url_save(url, filepath, bar, refer=None):
 	if bar:
 		bar.done()
 	print("{} finished!".format(os.path.basename(filepath)))
+
+def url_save(url, filepath, bar, refer=None):
+	"""save url with retry."""
+	retry = 3
+	n = 0
+	while True:
+		try:
+			ret = _url_save(url, filepath, bar, refer)
+			return ret
+		except (IOError, AssertionError), e:
+			n += 1
+			if n <= retry:
+				fname = os.path.basename(filepath)
+				if bar:
+					bar.done()
+				print("Retry {} on error: {} for {}".format(n, str(e), fname))
+			else:
+				raise
 
 def url_size(url):
 	request = urllib2.Request(url)
