@@ -244,8 +244,12 @@ def download_urls(urls, title, ext, total_size, output_dir='.', refer=None, merg
 	if len(urls) == 1:
 		url = urls[0]
 		print 'Downloading %s ...' % filename
-		url_save(url, filepath, bar, refer=refer)
-		bar.done()
+		try:
+			url_save(url, filepath, bar, refer=refer)
+			bar.done()
+		except urllib2.HTTPError, e:
+			bar.done()
+			print("Failed: {} {}".format(str(e), url))
 	else:
 		flvs = []
 		job_list = []
