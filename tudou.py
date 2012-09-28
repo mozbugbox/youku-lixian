@@ -23,7 +23,8 @@ def tudou_download_by_id(id, title, merge=True):
 	iid = r1(r'iid\s*=\s*(\S+)', html)
 	tudou_download_by_iid(iid, title, merge=merge)
 
-def tudou_download(url, merge=True):
+def tudou_download(url, config):
+	merge = config["merge"]
 	html = get_decoded_html(url)
 	iid = r1(r'iid\s*[:=]\s*(\d+)', html)
 	assert iid
@@ -58,7 +59,9 @@ def parse_playlist(url):
 	url = 'http://www.tudou.com/playlist/service/getAlbumItems.html?aid='+aid
 	return [(atitle + '-' + x['title'], str(x['itemId'])) for x in json.loads(get_html(url))['message']]
 
-def tudou_download_playlist(url, create_dir=False, merge=True):
+def tudou_download_playlist(url, config):
+	merge = config["merge"]
+	create_dir = config["create_dir"]
 	if create_dir:
 		raise NotImplementedError('please report a bug so I can implement this')
 	videos = parse_playlist(url)

@@ -33,7 +33,8 @@ def acfun_download_by_id(id, title, merge=True):
 	with open(title + '.json', 'w') as x:
 		x.write(srt)
 
-def acfun_download(url, merge=True):
+def acfun_download(url, config):
+	merge = config["merge"]
 	assert re.match(r'http://www.acfun.tv/v/ac(\d+)', url)
 	html = get_html(url).decode('utf-8')
 

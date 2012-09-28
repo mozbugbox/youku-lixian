@@ -12,6 +12,7 @@ import sohu
 import w56
 import cntv
 import yinyuetai
+import ifeng
 
 from common import *
 import re
@@ -39,19 +40,20 @@ def url_to_module(url):
 			'56':w56,
 			'cntv':cntv,
 			'yinyuetai':yinyuetai,
+			'ifeng':ifeng,
 	}
 	if k in downloads:
 		return downloads[k]
 	else:
 		raise NotImplementedError(url)
 
-def any_download(url, merge=True):
+def any_download(url, config):
 	m = url_to_module(url)
-	m.download(url, merge=merge)
+	m.download(url, config=config)
 
-def any_download_playlist(url, create_dir=False, merge=True):
+def any_download_playlist(url, config):
 	m = url_to_module(url)
-	m.download_playlist(url, create_dir=create_dir, merge=merge)
+	m.download_playlist(url, config=config)
 
 def main():
 	script_main('video_lixian', any_download, any_download_playlist)

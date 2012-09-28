@@ -18,7 +18,8 @@ def iask_download_by_id(id, title=None, merge=True):
 	assert title
 	download_urls(urls, title, 'flv', total_size=None, merge=merge)
 
-def iask_download(url, merge=True):
+def iask_download(url, config):
+	merge = config["merge"]
 	id = r1(r'vid:(\d+),', get_html(url))
 	iask_download_by_id(id, merge=merge)
 

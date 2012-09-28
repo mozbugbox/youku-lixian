@@ -77,6 +77,9 @@ def parse_page(url):
 	page = get_html(url)
 	id2 = re.search(r"var\s+videoId2\s*=\s*'(\S+)'", page).group(1)
 	title = parse_video_title(url, page)
+	if type(title) == unicode:
+		title = title.encode(default_encoding)
+		title = title.replace('?', '-')
 	return id2, title
 
 def get_info(videoId2):
@@ -127,11 +130,9 @@ def youku_download_by_id(id2, title, output_dir='.', stream_type=None, merge=Tru
 	total_size = sum(sizes)
 	download_urls(urls, title, file_type_of_url(urls[0]), total_size, output_dir, merge=merge)
 
-def youku_download(url, output_dir='', stream_type=None, merge=True):
+def youku_download(url, config, output_dir='', stream_type=None):
+	merge = config["merge"]
 	id2, title = parse_page(url)
-	if type(title) == unicode:
-		title = title.encode(default_encoding)
-		title = title.replace('?', '-')
 	youku_download_by_id(id2, title, output_dir, merge=merge)
 
 def parse_playlist_videos(html):
@@ -167,7 +168,10 @@ def parse_vplaylist(url):
 	n = int(re.search(r'<span class="num">(\d+)</span>', get_html(url)).group(1))
 	return ['http://v.youku.com/v_playlist/f%so0p%s.html' % (id, i) for i in range(n)]
 
-def youku_download_playlist(url, create_dir=False, merge=True):
+def youku_download_playlist(url, config):
+	create_dir = config["create_dir"]
+	print("Collecting video IDs for the playlist...")
+
 	if re.match(r'http://www.youku.com/show_page/id_\w+.html', url):
 		url = find_video_id_from_show_page(url)
 	if re.match(r'http://www.youku.com/playlist_show/id_\d+(?:_ascending_\d_mode_pic(?:_page_\d+)?)?.html', url):
@@ -188,9 +192,61 @@ def youku_download_playlist(url, create_dir=False, merge=True):
 		if not os.path.exists(title):
 			os.makedirs(title)
 		output_dir = title
-	for i, id in enumerate(ids):
-		print 'Downloading %s of %s videos...' % (i + 1, len(ids))
-		youku_download(id, output_dir=output_dir, merge=merge)
+
+	ids_len = len(ids)
+	if not config["interactive"]:
+		for i, id in enumerate(ids):
+			print 'Downloading %s of %s videos...' % (i + 1, len(ids))
+			youku_download(id, config=config, output_dir=output_dir)
+	else:
+		ids_info = []
+		ids_map = {}
+		print("Collecting video titles...")
+
+		# download video title in threads
+		import threading
+		ids_map_lock = threading.Lock()
+
+		def get_title(idx, avid):
+			"""Download thread title and save it"""
+			id2, title = parse_page(avid)
+			vid_info = {"id":id2, "title": title}
+			ids_map_lock.acquire()
+			ids_map[avid] = vid_info
+			print("[%d/%d] %s: %s" % (idx+1, ids_len, id2, title))
+			ids_map_lock.release()
+
+		args_list = list(enumerate(ids))
+		args_list.reverse()
+		thread_list = set()
+		conns = 5 # number of cocurrent threads
+		while len(thread_list) > 0 or len(args_list) > 0:
+			# start some threads
+			while len(thread_list) < conns and len(args_list) > 0:
+				args = args_list.pop()
+				t = threading.Thread(target=get_title, args=args)
+				thread_list.add(t)
+				t.start()
+
+			# remove finished threads
+			t_done = []
+			for t1 in thread_list:
+				t1.join(.1)
+				if not t1.isAlive():
+					t_done.append(t1)
+			for t1 in t_done:
+				thread_list.remove(t1)
+
+		# restore ids order
+		for i in ids:
+			ids_info.append(ids_map[i])
+
+		selected_ids = select_playlist_info(ids_info)
+		selected_len = len(selected_ids)
+		for i, vid_info in enumerate(selected_ids):
+			print 'Downloading %s of %s videos...' % (i + 1, selected_len)
+			youku_download_by_id(vid_info["id"], vid_info["title"],
+					output_dir, merge=config["merge"])
 
 download = youku_download
 download_playlist = youku_download_playlist

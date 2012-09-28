@@ -135,6 +135,51 @@ def url_size(url):
 def urls_size(urls):
 	return sum(map(url_size, urls))
 
+def select_playlist_info(alist):
+	"""Interactive select items from a list of {} with key "title" in it."""
+	result = set({})
+	alen = len(alist)
+	while True:
+		print("\nAvailable vidoes:")
+		for i, vid_info in enumerate(alist):
+			tag = " "
+			if i in result:
+				tag = "*"
+			print "%s%d) %s" % (tag, i+1, vid_info["title"])
+		print("Total: %d" % alen)
+		print('Select number and press <Enter>. Seperate numbers by ",".')
+		print('a = all; n = none; q = finish')
+		resp = raw_input("video number: ").strip()
+		if len(resp) <= 0:
+			continue
+		elif resp in {"a", "all"}:
+			result = set(range(alen))
+			continue
+		elif resp in {"n", "none"}:
+			result = set()
+			continue
+		elif resp in {"q", "quit", "finish", "exit"}:
+			break
+
+		resp = [x.strip() for x in resp.split(",")]
+		try:
+			resp = {(int(x) - 1) for x in resp}
+			for i in resp:
+				if i >= alen:
+					continue
+				if i in result:
+					result.remove(i)
+				else:
+					result.add(i)
+		except ValueError:
+			pass
+
+	ret = []
+	for i in range(len(alist)):
+		if i in result:
+			ret.append(alist[i])
+	return ret
+
 class SimpleProgressBar:
 	def __init__(self, total_size, total_pieces=1):
 		self.displayed = False
@@ -146,19 +191,21 @@ class SimpleProgressBar:
 	def update(self):
 		self.displayed = True
 		bar_size = 40
-		percent = self.received*100/self.total_size
+		percent = self.received*100.0/self.total_size
 		if percent > 100:
-			percent = 100
-		dots = bar_size * percent / 100
-		plus = percent - dots / bar_size * 100
+			percent = 100.0
+		bar_rate = 100.0 / bar_size
+		dots = percent / bar_rate
+		dots = int(dots)
+		plus = percent / bar_rate - dots
 		if plus > 0.8:
 			plus = '='
 		elif plus > 0.4:
-			plu = '>'
+			plus = '>'
 		else:
 			plus = ''
 		bar = '=' * dots + plus
-		bar = '{0:>3}%[{1:<40}] {2}/{3}'.format(percent, bar, self.current_piece, self.total_pieces)
+		bar = '{0:>3.0f}% [{1:<40}] {2}/{3}'.format(percent, bar, self.current_piece, self.total_pieces)
 		sys.stdout.write('\r'+bar)
 		sys.stdout.flush()
 	def update_received(self, n):
@@ -289,9 +336,9 @@ def playlist_not_supported(name):
 
 def script_main(script_name, download, download_playlist=None):
 	if download_playlist:
-		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] url ...' % script_name
-		short_opts = 'hc'
-		opts = ['help', 'playlist', 'create-dir', 'no-merge']
+		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] [-i|--interactive] url ...' % script_name
+		short_opts = 'hci'
+		opts = ['help', 'playlist', 'create-dir', 'no-merge', 'interactive']
 	else:
 		help = 'python [--no-merge] %s.py url ...' % script_name
 		short_opts = 'h'
@@ -303,6 +350,9 @@ def script_main(script_name, download, download_playlist=None):
 		print help
 		sys.exit(1)
 	playlist = False
+
+	config = {}
+	config["interactive"] = False
 	create_dir = False
 	merge = True
 	for o, a in opts:
@@ -315,6 +365,8 @@ def script_main(script_name, download, download_playlist=None):
 			create_dir = True
 		elif o in ('--no-merge'):
 			merge = False
+		elif o in ('-i', '--interactive'):
+			config["interactive"] = True
 		else:
 			print help
 			sys.exit(1)
@@ -322,9 +374,11 @@ def script_main(script_name, download, download_playlist=None):
 		print help
 		sys.exit(1)
 
+	config["create_dir"] = create_dir
+	config["merge"] = merge
 	for url in args:
 		if playlist:
-			download_playlist(url, create_dir=create_dir, merge=merge)
+			download_playlist(url, config=config)
 		else:
-			download(url, merge=merge)
+			download(url, config=config)
 

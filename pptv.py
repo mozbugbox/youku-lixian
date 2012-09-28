@@ -25,8 +25,9 @@ def pptv_download_by_id(id, merge=True):
 	assert rid.endswith('.mp4')
 	download_urls(urls, title, 'mp4', total_size=total_size, merge=merge)
 
-def pptv_download(url, merge=True):
+def pptv_download(url, config):
 	assert re.match(r'http://v.pptv.com/show/(\w+)\.html$', url)
+	merge = config["merge"]
 	html = get_html(url)
 	id = r1(r'webcfg\s*=\s*{"id":\s*(\d+)', html)
 	assert id

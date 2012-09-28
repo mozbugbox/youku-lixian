@@ -10,7 +10,8 @@ def real_url(url):
 	import json
 	return json.loads(get_html(url[:-3]+'hml?v='+str(int(time.time()) + 1921658928)))['l'] # XXX: what is 1921658928?
 
-def iqiyi_download(url, merge=True):
+def iqiyi_download(url, config):
+	merge = config["merge"]
 	html = get_html(url)
 	#title = r1(r'title\s*:\s*"([^"]+)"', html)
 	#title = unescape_html(title).decode('utf-8')

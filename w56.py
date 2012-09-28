@@ -20,7 +20,8 @@ def w56_download_by_id(id, title=None, output_dir='.', merge=True):
 	assert ext in ('flv', 'mp4')
 	download_urls([url], title, str(ext), total_size=size, merge=merge)
 
-def w56_download(url, merge=True):
+def w56_download(url, config):
+	merge = config["merge"]
 	id = r1(r'http://www.56.com/u\d+/v_(\w+).html', url)
 	w56_download_by_id(id, merge=merge)
 
