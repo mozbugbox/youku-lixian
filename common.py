@@ -114,9 +114,10 @@ def url_save(url, filepath, bar, refer=None):
 		except (IOError, AssertionError), e:
 			n += 1
 			if n <= retry:
-				fname = os.path.basename(filepath)
 				if bar:
+					bar.raise_piece(-1)
 					bar.done()
+				fname = os.path.basename(filepath)
 				print("Retry {} on error: {} for {}".format(n, str(e), fname))
 			else:
 				raise
