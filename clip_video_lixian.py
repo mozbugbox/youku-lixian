@@ -14,7 +14,7 @@ def get_clipboard_text():
     import win32clipboard
     import win32api
     """Get win32 clipboard text data"""
-    data = None
+    data = ""
     win32clipboard.OpenClipboard(0)
     try:
         cf = win32clipboard.CF_UNICODETEXT
@@ -44,8 +44,8 @@ def main():
             break
 
     if not url_flag:
-        data = get_clipboard_text()
-        if data and data.startswith("http"):
+        data = get_clipboard_text().strip()
+        if data.startswith("http"):
             print(data)
             sys.argv.append(data)
         else:
