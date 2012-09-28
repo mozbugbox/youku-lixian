@@ -39,6 +39,9 @@ def get_clipboard_text():
     return data
 
 def main():
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     log_level = log.INFO
     log.basicConfig(format="%(levelname)s>> %(message)s", level=log_level)
 
@@ -67,7 +70,5 @@ def main():
         print("** Err: {}".format(e.message))
 
 if __name__ == '__main__':
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
     main()
 
