@@ -17,7 +17,8 @@ def ifeng_download_by_id(id, title=None, merge=True):
 	assert url.endswith('.mp4')
 	download_urls([url], title, 'mp4', total_size=None, merge=merge)
 
-def ifeng_download(url, merge=True):
+def ifeng_download(url, config):
+	merge = config["merge"]
 	id = r1(r'/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.shtml$', url)
 	if id:
 		return ifeng_download_by_id(id)
