@@ -337,13 +337,13 @@ def playlist_not_supported(name):
 
 def script_main(script_name, download, download_playlist=None):
 	if download_playlist:
-		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] [-i|--interactive] url ...' % script_name
+		help = 'python %s.py [--playlist] [-c|--create-dir] [--no-merge] [-i|--interactive] [--sogou-proxy] url ...' % script_name
 		short_opts = 'hci'
-		opts = ['help', 'playlist', 'create-dir', 'no-merge', 'interactive']
+		opts = ['help', 'playlist', 'create-dir', 'no-merge', 'interactive', 'sogou-proxy']
 	else:
-		help = 'python [--no-merge] %s.py url ...' % script_name
+		help = 'python [--no-merge] [--sogou-proxy] %s.py url ...' % script_name
 		short_opts = 'h'
-		opts = ['help', 'no-merge']
+		opts = ['help', 'no-merge', 'sogou-proxy']
 	import sys, getopt
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], short_opts, opts)
@@ -354,6 +354,7 @@ def script_main(script_name, download, download_playlist=None):
 
 	config = {}
 	config["interactive"] = False
+	config["sogou-proxy"] = False
 	create_dir = False
 	merge = True
 	for o, a in opts:
@@ -368,6 +369,8 @@ def script_main(script_name, download, download_playlist=None):
 			merge = False
 		elif o in ('-i', '--interactive'):
 			config["interactive"] = True
+		elif o in ('--sogou-proxy'):
+			config["sogou-proxy"] = True
 		else:
 			print help
 			sys.exit(1)
@@ -377,6 +380,10 @@ def script_main(script_name, download, download_playlist=None):
 
 	config["create_dir"] = create_dir
 	config["merge"] = merge
+	if config["sogou-proxy"]:
+		import sogou_proxy
+		cookie_jar = sogou_proxy.install_proxy_opener_with_cookie()
+
 	for url in args:
 		if playlist:
 			download_playlist(url, config=config)
