@@ -11,22 +11,31 @@ import io
 import logging as log
 
 def get_clipboard_text():
-    import win32clipboard
-    import win32api
     """Get win32 clipboard text data"""
     data = ""
-    win32clipboard.OpenClipboard(0)
-    try:
-        cf = win32clipboard.CF_UNICODETEXT
-        if not win32clipboard.IsClipboardFormatAvailable(cf):
-            cf = win32clipboard.CF_TEXT
-        data = win32clipboard.GetClipboardData(cf)
+
+    CF_UNICODETEXT = 13
+    CF_TEXT = 1
+
+    import ctypes
+    user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
+    kernel32.GlobalLock.restype = ctypes.c_wchar_p # lock & copy memory
+
+    cf = CF_UNICODETEXT
+    if not user32.IsClipboardFormatAvailable(cf):
+        cf = CF_TEXT
+
+    user32.OpenClipboard(None)
+    pcontent = user32.GetClipboardData(cf)
+    if pcontent:
+        data = kernel32.GlobalLock(pcontent)
+        kernel32.GlobalUnlock(pcontent)
         idx_null = data.find('\x00')
         if idx_null > 0:
             data = data[:idx_null]
-    except win32api.error, e:
-        print("**Error: {}".format(e.message))
-    win32clipboard.CloseClipboard()
+    user32.CloseClipboard()
+
     return data
 
 def main():
@@ -50,9 +59,15 @@ def main():
             sys.argv.append(data)
         else:
             print("** You need to copy a video url to the clipboard...")
+
     import video_lixian
-    video_lixian.main()
+    try:
+        video_lixian.main()
+    except Exception, e:
+        print("** Err: {}".format(e.message))
 
 if __name__ == '__main__':
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     main()
 
