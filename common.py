@@ -123,10 +123,18 @@ def select_playlist_info(alist):
 				tag = "*"
 			print "%s%d) %s" % (tag, i+1, vid_info["title"])
 		print("Total: %d" % alen)
-		print('Select number and press <Enter>. Seperate numbers by ",".')
-		print('a = all; n = none; q = finish')
-		resp = raw_input("video number: ").strip()
+		resp = raw_input("video numbers (h = HELP): ")
+		resp = resp.strip().strip(",").lower()
 		if len(resp) <= 0:
+			continue
+		elif resp in {"?", "h", "help"}:
+			print('=============== HELP ====================')
+			print('Select number and press <Enter>.')
+			print('Seperate numbers by ","; use range like: 3-5.')
+			print('Example: 1,3-5,8')
+			print('a = all; n = none; q = finish; h = help')
+			print('============= HELP END ==================')
+			raw_input("Press <Enter> to continue...")
 			continue
 		elif resp in {"a", "all"}:
 			result = set(range(alen))
@@ -134,7 +142,7 @@ def select_playlist_info(alist):
 		elif resp in {"n", "none"}:
 			result = set()
 			continue
-		elif resp in {"q", "quit", "finish", "exit"}:
+		elif resp in {"q", "quit", "finish", "exit", "bye"}:
 			break
 
 		resp = [x.strip() for x in resp.split(",")]
