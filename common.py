@@ -139,14 +139,27 @@ def select_playlist_info(alist):
 
 		resp = [x.strip() for x in resp.split(",")]
 		try:
-			resp = {(int(x) - 1) for x in resp}
-			for i in resp:
-				if i >= alen:
-					continue
-				if i in result:
-					result.remove(i)
+			ranges = []
+			for item in resp:
+				# also do range as 3-5
+				start, _, end = item.partition("-")
+				start = int(start.strip())
+				if end:
+					end = int(end.strip())
 				else:
-					result.add(i)
+					end = start
+
+				ranges.append((start, end))
+
+			for start, end in ranges:
+				# user input count start from 1
+				for i in range(start - 1, end):
+					if i >= alen:
+						continue
+					if i in result:
+						result.remove(i)
+					else:
+						result.add(i)
 		except ValueError:
 			pass
 
