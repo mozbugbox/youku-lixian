@@ -148,10 +148,18 @@ def select_playlist_info(alist):
 				tag = "*"
 			print "%s%d) %s" % (tag, i+1, vid_info["title"])
 		print("Total: %d" % alen)
-		print('Select number and press <Enter>. Seperate numbers by ",".')
-		print('a = all; n = none; q = finish')
-		resp = raw_input("video number: ").strip()
+		resp = raw_input("video numbers (h = HELP): ")
+		resp = resp.strip().strip(",").lower()
 		if len(resp) <= 0:
+			continue
+		elif resp in {"?", "h", "help"}:
+			print('=============== HELP ====================')
+			print('Select number and press <Enter>.')
+			print('Seperate numbers by ","; use range like: 3-5.')
+			print('Example: 1,3-5,8')
+			print('a = all; n = none; q = finish; h = help')
+			print('============= HELP END ==================')
+			raw_input("Press <Enter> to continue...")
 			continue
 		elif resp in {"a", "all"}:
 			result = set(range(alen))
@@ -159,19 +167,32 @@ def select_playlist_info(alist):
 		elif resp in {"n", "none"}:
 			result = set()
 			continue
-		elif resp in {"q", "quit", "finish", "exit"}:
+		elif resp in {"q", "quit", "finish", "exit", "bye"}:
 			break
 
 		resp = [x.strip() for x in resp.split(",")]
 		try:
-			resp = {(int(x) - 1) for x in resp}
-			for i in resp:
-				if i >= alen:
-					continue
-				if i in result:
-					result.remove(i)
+			ranges = []
+			for item in resp:
+				# also do range as 3-5
+				start, _, end = item.partition("-")
+				start = int(start.strip())
+				if end:
+					end = int(end.strip())
 				else:
-					result.add(i)
+					end = start
+
+				ranges.append((start, end))
+
+			for start, end in ranges:
+				# user input count start from 1
+				for i in range(start - 1, end):
+					if i >= alen:
+						continue
+					if i in result:
+						result.remove(i)
+					else:
+						result.add(i)
 		except ValueError:
 			pass
 
