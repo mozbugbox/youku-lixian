@@ -98,7 +98,7 @@ class SogouProxyHandler(urllib2.ProxyHandler):
     def http_request(self, request):
         """Fix HTTP headers before sending out request"""
         timestamp = "{:08x}".format(int(time.time()))
-        host = request.get_host()
+        host = request.get_origin_req_host()
         sogou_tag = calc_sogou_hash(timestamp, host)
         request.add_header("X-Sogou-Auth", SOGOU_AUTH)
         request.add_header("X-Sogou-Timestamp", timestamp)
@@ -108,6 +108,10 @@ class SogouProxyHandler(urllib2.ProxyHandler):
         if not request.has_header("DNT") and self.do_not_track:
             request.add_header("DNT", "1")
         request.add_header("User-Agent", "Mozilla/5.0 (X11; Linux i686; rv:15.0) Gecko/20100101 Firefox/15.0 SogouProxy/{}".format(__version__))
+
+        # change proxy on each connection
+        proxy_host = self.get_sogou_proxy()
+        request.set_proxy(proxy_host, "http")
         return request
 
 def install_proxy_opener_with_cookie():
