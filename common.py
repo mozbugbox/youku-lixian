@@ -98,6 +98,10 @@ def _url_save(url, filepath, bar, refer=None):
 			output.write(buffer)
 			if bar:
 				bar.update_received(len(buffer))
+	if not (received == file_size == os.path.getsize(filepath)):
+		# Failed to receive, back off bar received count
+		bar.update_received(-received)
+		bar.raise_piece(-1)
 	assert received == file_size == os.path.getsize(filepath), '%s == %s == %s' % (received, file_size, os.path.getsize(filepath))
 	if bar:
 		bar.done()
@@ -115,7 +119,6 @@ def url_save(url, filepath, bar, refer=None):
 			n += 1
 			if n <= retry:
 				if bar:
-					bar.raise_piece(-1)
 					bar.done()
 				fname = os.path.basename(filepath)
 				print("Retry {} on error: {} for {}".format(n, str(e), fname))
