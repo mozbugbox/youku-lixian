@@ -114,11 +114,7 @@ def url_save(url, filepath, bar, refer=None):
 		except (IOError, AssertionError), e:
 			n += 1
 			if n <= retry:
-				file_size = 0
-				if os.path.exists(filepath):
-					file_size = os.path.getsize(filepath)
 				if bar:
-					bar.update_received(-file_size)
 					bar.raise_piece(-1)
 					bar.done()
 				fname = os.path.basename(filepath)
